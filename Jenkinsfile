@@ -17,6 +17,7 @@ pipeline {
 
         stage('Build App') {
             steps {
+                sh 'cd my-app/'
                 sh 'npm run build'   // Or adjust based on your app (e.g., React/Vite/Next)
             }
         }
