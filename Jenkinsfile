@@ -7,6 +7,7 @@ pipeline {
         EC2_HOST = 'YOUR.EC2.PUBLIC.IP' // update with your EC2 public IP
         SSH_CREDENTIALS_ID = 'ec2-ssh-key' // Jenkins credentials ID for SSH key
         APP_DIR = '/home/ubuntu/my-app' // target directory on EC2
+        NPM_PATH = '/usr/local/bin/npm' // explicit path to npm
     }
 
     stages {
@@ -18,8 +19,10 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                // Install dependencies locally for building
-                sh 'npm ci'
+                script {
+                    // Use the full path to npm
+                    sh "${env.NPM_PATH} ci"
+                }
             }
         }
 
@@ -36,23 +39,24 @@ pipeline {
                 sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
                     // Create directory and clean old build
                     sh """
-                        ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST '
-                            mkdir -p $APP_DIR &&
-                            rm -rf $APP_DIR/*'
+                        ssh -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_HOST} '
+                            mkdir -p ${env.APP_DIR} &&
+                            rm -rf ${env.APP_DIR}/*
+                        '
                     """
 
                     // Copy built files to EC2
                     sh """
-                        scp -o StrictHostKeyChecking=no -r ./my-app/dist/* $EC2_USER@$EC2_HOST:$APP_DIR
+                        scp -o StrictHostKeyChecking=no -r ./my-app/dist/* ${env.EC2_USER}@${env.EC2_HOST}:${env.APP_DIR}
                     """
 
                     // Serve the app using a simple server
                     sh """
-                        ssh $EC2_USER@$EC2_HOST '
-                            # Stop existing serve process if any (optional)
+                        ssh ${env.EC2_USER}@${env.EC2_HOST} '
+                            # Stop existing serve process if any
                             pkill -f "npx serve" || true
                             # Start the serve process in background
-                            nohup npx serve -s $APP_DIR -l 3000 > $APP_DIR/serve.log 2>&1 &
+                            nohup npx serve -s ${env.APP_DIR} -l 3000 > ${env.APP_DIR}/serve.log 2>&1 &
                         '
                     """
                 }
