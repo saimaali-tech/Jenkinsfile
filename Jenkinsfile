@@ -1,47 +1,41 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18'
+        }
+    }
 
     environment {
-        EC2_USER = 'ubuntu'                          // use 'ec2-user' for Amazon Linux
-        EC2_HOST = 'YOUR.EC2.PUBLIC.IP'              // replace with your actual IP
-        SSH_KEY = credentials('ec2-ssh-key')         // must match the ID in Jenkins credentials
-        APP_DIR = '/home/ubuntu/my-app'              // update to match your EC2 path
+        EC2_USER = 'ubuntu'
+        EC2_HOST = 'your.ec2.ip.here'
+        SSH_KEY = credentials('ec2-ssh-key')
+        APP_DIR = '/home/ubuntu/my-app'
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'  // faster and safer than `npm install` for CI
+                sh 'npm ci'
             }
         }
 
         stage('Build App') {
             steps {
-                dir('my-app') {
-                    sh 'npm run build'
-                }
+                sh 'npm run build'
             }
         }
 
         stage('Deploy to EC2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent (credentials: ['ec2-ssh-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST '
                             mkdir -p $APP_DIR &&
                             rm -rf $APP_DIR/*'
                     """
-
                     sh """
-                        scp -o StrictHostKeyChecking=no -r ./my-app/dist/* $EC2_USER@$EC2_HOST:$APP_DIR
+                        scp -o StrictHostKeyChecking=no -r ./dist/* $EC2_USER@$EC2_HOST:$APP_DIR
                     """
-
                     sh """
                         ssh $EC2_USER@$EC2_HOST '
                             cd $APP_DIR &&
