@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -6,7 +7,7 @@ pipeline {
         EC2_HOST = 'YOUR.EC2.PUBLIC.IP'
         SSH_CREDENTIALS_ID = 'ec2-ssh-key'
         APP_DIR = '/home/ubuntu/my-app'
-        NPM_PATH = '/usr/local/bin/npm' // explicitly set the npm path
+        NPM_PATH = '/root/.nvm/versions/node/v22.17.0/bin/npm' // updated npm path
     }
 
     stages {
@@ -25,7 +26,7 @@ pipeline {
         stage('Build App') {
             steps {
                 dir('my-app') {
-                    sh 'npm run build'
+                    sh "${env.NPM_PATH} run build"
                 }
             }
         }
@@ -47,7 +48,7 @@ pipeline {
                     sh """
                         ssh ${env.EC2_USER}@${env.EC2_HOST} '
                             pkill -f "npx serve" || true
-                            nohup ${env.NPM_PATH} run npx serve -s ${env.APP_DIR} -l 3000 > ${env.APP_DIR}/serve.log 2>&1 &
+                            nohup npx serve -s ${env.APP_DIR} -l 3000 > ${env.APP_DIR}/serve.log 2>&1 &
                         '
                     """
                 }
