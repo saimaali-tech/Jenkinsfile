@@ -1,13 +1,13 @@
-
 pipeline {
     agent any
 
     environment {
         EC2_USER = 'ubuntu'
-        EC2_HOST = 'YOUR.EC2.PUBLIC.IP'
+        EC2_HOST = 'YOUR.EC2.PUBLIC.IP' // Replace this with your actual EC2 public IP
         SSH_CREDENTIALS_ID = 'ec2-ssh-key'
         APP_DIR = '/home/ubuntu/my-app'
-        NPM_PATH = '/root/.nvm/versions/node/v22.17.0/bin/npm' // updated npm path
+        NPM_PATH = '/usr/local/bin/npm' // ✅ Global path Jenkins can access
+        NPX_PATH = '/usr/local/bin/npx' // ✅ Explicit npx path for EC2 server
     }
 
     stages {
@@ -34,6 +34,7 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
+                    // Clean target directory on EC2
                     sh """
                         ssh -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_HOST} '
                             mkdir -p ${env.APP_DIR} &&
@@ -41,14 +42,16 @@ pipeline {
                         '
                     """
 
+                    // Copy built app to EC2
                     sh """
                         scp -o StrictHostKeyChecking=no -r ./my-app/dist/* ${env.EC2_USER}@${env.EC2_HOST}:${env.APP_DIR}
                     """
 
+                    // Serve the app using npx serve
                     sh """
                         ssh ${env.EC2_USER}@${env.EC2_HOST} '
                             pkill -f "npx serve" || true
-                            nohup npx serve -s ${env.APP_DIR} -l 3000 > ${env.APP_DIR}/serve.log 2>&1 &
+                            nohup ${env.NPX_PATH} serve -s ${env.APP_DIR} -l 3000 > ${env.APP_DIR}/serve.log 2>&1 &
                         '
                     """
                 }
