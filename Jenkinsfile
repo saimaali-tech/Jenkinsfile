@@ -5,9 +5,7 @@ pipeline {
         EC2_USER = 'ubuntu'
         EC2_HOST = 'YOUR.EC2.PUBLIC.IP' // Replace this with your actual EC2 public IP
         SSH_CREDENTIALS_ID = 'ec2-ssh-key'
-        APP_DIR = '/home/ubuntu/my-app'
-        NPM_PATH = '/usr/local/bin/npm' // ✅ Global path Jenkins can access
-        NPX_PATH = '/usr/local/bin/npx' // ✅ Explicit npx path for EC2 server
+        APP_DIR = '/home/ubuntu/Jenkinsfile'
     }
 
     stages {
