@@ -4,7 +4,7 @@ pipeline {
     environment {
         EC2_USER = 'ubuntu'
         EC2_HOST = '3.106.239.136'
-        APP_DIR = '/home/ubuntu/myapp'
+        REMOTE_DIR = '/home/ubuntu/myapp'
     }
 
     stages {
