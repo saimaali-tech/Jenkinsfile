@@ -4,7 +4,7 @@ pipeline {
     environment {
         EC2_USER = 'ubuntu'
         EC2_HOST = '3.25.199.168'
-        REMOTE_DIR = '/home/ubuntu/Jenkins'
+        REMOTE_DIR = '/home/ubuntu/Jenkinsfile'
         SSH_KEY = '/home/ubuntu/.ssh'
     }
 
